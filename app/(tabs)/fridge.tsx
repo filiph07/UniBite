@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -93,83 +92,100 @@ export default function FridgeScreen() {
 
   if (!user) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.title}>Fridge</Text>
-        <Text style={styles.subtitle}>Please log in to manage your fridge.</Text>
+      <View className="flex-1 items-center justify-center px-6 bg-slate-950">
+        <Text className="text-2xl font-bold text-slate-200">Fridge</Text>
+        <Text className="text-sm text-slate-400 mt-2 text-center">Please log in to manage your fridge.</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-slate-950 px-4 pt-4 pb-2"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Your fridge</Text>
-        <Text style={styles.subtitle}>Add what you currently have at home.</Text>
+      <View className="mb-4">
+        <Text className="text-3xl font-extrabold text-slate-200">Your Fridge</Text>
+        <Text className="text-sm text-slate-400 mt-1">Add what you currently have at home.</Text>
       </View>
 
-      <View style={styles.inputRow}>
+      {/* Input Field */}
+      <View className="flex-row items-center mt-2">
         <TextInput
-          style={styles.input}
-          placeholder="e.g. Chicken breast"
+          className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 text-base shadow-sm"
+          placeholder="e.g. Chicken breast, Spinach..."
+          placeholderTextColor="#64748b"
           value={ingredientName}
           onChangeText={setIngredientName}
         />
       </View>
 
-      <View style={styles.categoryRow}>
-        {CATEGORIES.map((c) => (
-          <Pressable
-            key={c.value}
-            style={[
-              styles.categoryChip,
-              category === c.value && styles.categoryChipActive,
-            ]}
-            onPress={() => setCategory(c.value)}
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                category === c.value && styles.categoryTextActive,
-              ]}
+      {/* Category Pills */}
+      <View className="flex-row flex-wrap gap-2 mt-4">
+        {CATEGORIES.map((c) => {
+          const isActive = category === c.value;
+          return (
+            <Pressable
+              key={c.value}
+              className={`px-4 py-2 rounded-full border ${
+                isActive 
+                  ? 'bg-emerald-500 border-emerald-500 shadow-sm' 
+                  : 'bg-transparent border-slate-700'
+              }`}
+              onPress={() => setCategory(c.value)}
             >
-              {c.label}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                className={`text-xs ${
+                  isActive ? 'text-emerald-950 font-bold' : 'text-slate-400 font-medium'
+                }`}
+              >
+                {c.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <Pressable style={styles.addButton} onPress={handleAdd} disabled={adding}>
-        <Text style={styles.addButtonText}>{adding ? 'Adding…' : 'Add to fridge'}</Text>
+      {/* Add Button */}
+      <Pressable 
+        className={`bg-emerald-500 rounded-xl py-3.5 items-center mt-6 shadow-sm ${adding ? 'opacity-70' : 'active:opacity-80'}`}
+        onPress={handleAdd} 
+        disabled={adding}
+      >
+        <Text className="text-emerald-950 font-bold text-base">
+          {adding ? 'Adding...' : '➕ Add to fridge'}
+        </Text>
       </Pressable>
 
-      <View style={styles.listContainer}>
+      {/* Inventory List */}
+      <View className="flex-1 mt-6">
+        <Text className="text-sm font-bold text-emerald-500 uppercase tracking-wider mb-2">Current Inventory</Text>
+        
         {loading ? (
-          <ActivityIndicator />
+          <ActivityIndicator className="mt-4" color="#10b981" />
         ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text className="text-rose-500 text-sm mt-2">{error}</Text>
         ) : items.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Nothing in your fridge yet. Start by adding a few ingredients.
-          </Text>
+          <View className="bg-slate-900 border border-slate-800 rounded-2xl p-6 items-center mt-2">
+            <Text className="text-slate-500 text-center text-sm">Nothing in your fridge yet. Start by adding a few ingredients above!</Text>
+          </View>
         ) : (
           <FlatList
             data={items}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              <View style={styles.itemRow}>
+              <View className="flex-row justify-between items-center py-3 border-b border-slate-800/60">
                 <View>
-                  <Text style={styles.itemName}>{item.ingredientName}</Text>
-                  <Text style={styles.itemMeta}>{item.category}</Text>
+                  <Text className="text-slate-200 text-base font-semibold">{item.ingredientName}</Text>
+                  <Text className="text-slate-500 text-xs mt-1 capitalize">{item.category}</Text>
                 </View>
                 <Pressable
-                  style={styles.deleteButton}
+                  className="px-3 py-1.5 rounded-full border border-rose-500/50 active:bg-rose-500/10"
                   onPress={() => handleDelete(item.id)}
                 >
-                  <Text style={styles.deleteButtonText}>Remove</Text>
+                  <Text className="text-rose-500 text-xs font-bold">Remove</Text>
                 </Pressable>
               </View>
             )}
@@ -179,132 +195,3 @@ export default function FridgeScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: '#020617',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: '#020617',
-  },
-  header: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#e5e7eb',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginTop: 4,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#e5e7eb',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  categoryChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  categoryChipActive: {
-    backgroundColor: '#22c55e',
-    borderColor: '#22c55e',
-  },
-  categoryText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  categoryTextActive: {
-    color: '#022c22',
-    fontWeight: '600',
-  },
-  addButton: {
-    backgroundColor: '#22c55e',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  addButtonText: {
-    color: '#022c22',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  listContainer: {
-    flex: 1,
-    marginTop: 16,
-  },
-  listContent: {
-    paddingBottom: 16,
-  },
-  emptyText: {
-    color: '#6b7280',
-    fontSize: 14,
-  },
-  errorText: {
-    color: '#f97316',
-    fontSize: 14,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#111827',
-  },
-  itemName: {
-    color: '#e5e7eb',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  itemMeta: {
-    color: '#9ca3af',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  deleteButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  deleteButtonText: {
-    color: '#ef4444',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
-

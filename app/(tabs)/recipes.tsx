@@ -4,7 +4,6 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -89,7 +88,7 @@ export default function RecipesScreen() {
 
     if (inventory.length === 0) {
       Alert.alert(
-        'No ingredients',
+        'Empty Fridge',
         'Add a few ingredients to your fridge first so UniBite can build a recipe.',
       );
       return;
@@ -113,7 +112,7 @@ export default function RecipesScreen() {
     try {
       setSaving(true);
       await saveRecipeForUser(user.uid, recipe);
-      Alert.alert('Saved', 'Recipe saved to your account.');
+      Alert.alert('Success!', 'Recipe saved to your account.');
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Failed to save recipe.');
     } finally {
@@ -131,103 +130,109 @@ export default function RecipesScreen() {
 
   if (!user) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.title}>Recipes</Text>
-        <Text style={styles.subtitle}>Please log in to generate recipes.</Text>
+      <View className="flex-1 items-center justify-center px-6 bg-slate-950">
+        <Text className="text-2xl font-bold text-slate-200">Recipes</Text>
+        <Text className="text-sm text-slate-400 mt-2 text-center">Please log in to generate recipes.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>AI Recipe Generator</Text>
-      <Text style={styles.subtitle}>
-        UniBite will combine your fridge items with common pantry staples to suggest a meal.
+    <View className="flex-1 px-4 pt-4 pb-2 bg-slate-950">
+      <Text className="text-3xl font-extrabold text-slate-200">AI Chef</Text>
+      <Text className="text-sm text-slate-400 mt-1">
+        UniBite will combine your fridge items with pantry staples to suggest a meal.
       </Text>
 
       {inventoryLoading ? (
-        <ActivityIndicator style={{ marginTop: 16 }} />
+        <ActivityIndicator className="mt-4" color="#10b981" />
       ) : inventoryError ? (
-        <Text style={styles.errorText}>{inventoryError}</Text>
+        <Text className="text-rose-500 mt-3 text-sm">{inventoryError}</Text>
       ) : (
-        <Text style={styles.inventoryHint}>
-          Using {inventory.length} ingredient{inventory.length === 1 ? '' : 's'} from your fridge.
+        <Text className="text-xs text-slate-500 mt-3 font-medium uppercase tracking-wider">
+          Using {inventory.length} ingredient{inventory.length === 1 ? '' : 's'} from your fridge
         </Text>
       )}
 
+      {/* Main Generate Button */}
       <Pressable
-        style={[styles.generateButton, generating && styles.generateButtonDisabled]}
+        className={`bg-emerald-500 rounded-2xl py-4 items-center mt-4 shadow-lg ${generating ? 'opacity-50' : 'active:opacity-80'}`}
         onPress={handleGenerate}
         disabled={generating}
       >
-        <Text style={styles.generateButtonText}>
-          {generating ? 'Generating…' : 'Generate meal'}
+        <Text className="text-emerald-950 font-bold text-lg">
+          {generating ? 'Chopping virtual onions...' : "What's for dinner?"}
         </Text>
       </Pressable>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error && <Text className="text-rose-500 mt-3 text-sm text-center">{error}</Text>}
 
+      {/* Generated Recipe Card */}
       {recipe && (
-        <ScrollView style={styles.recipeCard} contentContainerStyle={styles.recipeContent}>
-          <View style={styles.recipeHeader}>
-            <Text style={styles.recipeTitle}>{recipe.title}</Text>
-            <Text style={styles.recipeMeta}>{recipe.timeMinutes} min</Text>
+        <ScrollView className="mt-6 rounded-2xl bg-slate-900 border border-slate-800" contentContainerStyle={{ padding: 20 }}>
+          <View className="flex-row justify-between items-start mb-4">
+            <Text className="text-2xl font-bold text-slate-200 flex-1 mr-4">{recipe.title}</Text>
+            <View className="bg-slate-800 px-3 py-1 rounded-full">
+              <Text className="text-xs text-emerald-400 font-semibold">🕒 {recipe.timeMinutes} min</Text>
+            </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Ingredients used</Text>
-          {recipe.ingredientsUsed.map((ing) => (
-            <Text key={ing} style={styles.bulletText}>
-              • {ing}
-            </Text>
-          ))}
+          <Text className="text-sm font-bold text-emerald-500 uppercase tracking-wider mb-2 mt-2">Ingredients Used</Text>
+          <View className="flex-row flex-wrap gap-2 mb-4">
+            {recipe.ingredientsUsed.map((ing) => (
+              <View key={ing} className="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                <Text className="text-xs text-slate-300 capitalize">{ing}</Text>
+              </View>
+            ))}
+          </View>
 
-          <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Steps</Text>
+          <Text className="text-sm font-bold text-emerald-500 uppercase tracking-wider mb-2 mt-2">Instructions</Text>
           {recipe.steps.map((step, index) => (
-            <Text key={index} style={styles.bulletText}>
-              {index + 1}. {step}
-            </Text>
+            <View key={index} className="flex-row mb-3 pr-4">
+              <Text className="text-slate-500 font-bold mr-3">{index + 1}.</Text>
+              <Text className="text-sm text-slate-300 leading-relaxed">{step}</Text>
+            </View>
           ))}
 
           <Pressable
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            className={`mt-4 border-2 border-emerald-500 rounded-xl py-3 items-center ${saving ? 'opacity-50' : 'active:bg-emerald-500/10'}`}
             onPress={handleSave}
             disabled={saving}
           >
-            <Text style={styles.saveButtonText}>
-              {saving ? 'Saving…' : 'Save recipe'}
+            <Text className="text-emerald-500 font-bold text-base">
+              {saving ? 'Saving...' : '💾 Save this recipe'}
             </Text>
           </Pressable>
         </ScrollView>
       )}
 
-      <View style={styles.savedContainer}>
-        <Text style={styles.savedTitle}>Saved recipes</Text>
+      {/* Saved Recipes Section */}
+      <View className="mt-8 flex-1">
+        <Text className="text-lg font-bold text-slate-200 mb-2">Saved Recipes</Text>
 
         {savedLoading ? (
-          <ActivityIndicator style={{ marginTop: 8 }} />
+          <ActivityIndicator className="mt-2" color="#10b981" />
         ) : savedError ? (
-          <Text style={styles.errorText}>{savedError}</Text>
+          <Text className="text-rose-500 text-sm">{savedError}</Text>
         ) : savedRecipes.length === 0 ? (
-          <Text style={styles.savedEmpty}>
-            You haven&apos;t saved any recipes yet. Generate one and tap &quot;Save recipe&quot;.
-          </Text>
+          <View className="bg-slate-900 border border-slate-800 rounded-2xl p-6 items-center mt-2">
+            <Text className="text-slate-500 text-center text-sm">No saved recipes yet. Generate a meal and tap save!</Text>
+          </View>
         ) : (
-          <ScrollView style={styles.savedList} contentContainerStyle={styles.savedListContent}>
+          <ScrollView className="mt-2" contentContainerStyle={{ paddingBottom: 20 }}>
             {savedRecipes.map((r) => (
-              <View key={r.id} style={styles.savedCard}>
-                <View style={styles.savedCardMain}>
-                  <Text style={styles.savedCardTitle}>{r.title}</Text>
-                  <Text style={styles.savedCardMeta}>
-                    {r.timeMinutes} min ·{' '}
-                    {r.ingredientsList.slice(0, 2).join(', ')}
-                    {r.ingredientsList.length > 2 ? ' +' : ''}
+              <View key={r.id} className="flex-row items-center justify-between py-3 px-4 rounded-xl bg-slate-900 border border-slate-800 mb-3">
+                <View className="flex-1 mr-3">
+                  <Text className="text-base font-semibold text-slate-200" numberOfLines={1}>{r.title}</Text>
+                  <Text className="text-xs text-slate-500 mt-1" numberOfLines={1}>
+                    {r.timeMinutes} min • {r.ingredientsList.slice(0, 3).join(', ')}
                   </Text>
                 </View>
                 <Pressable
                   onPress={() => handleDeleteSaved(r.id)}
-                  style={styles.savedDeleteButton}
+                  className="bg-rose-500/10 px-3 py-2 rounded-lg"
                 >
-                  <Text style={styles.savedDeleteText}>Delete</Text>
+                  <Text className="text-xs font-bold text-rose-500">Delete</Text>
                 </Pressable>
               </View>
             ))}
@@ -237,170 +242,3 @@ export default function RecipesScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    backgroundColor: '#020617',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: '#020617',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#e5e7eb',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginTop: 4,
-  },
-  inventoryHint: {
-    fontSize: 13,
-    color: '#9ca3af',
-    marginTop: 12,
-  },
-  errorText: {
-    color: '#f97316',
-    marginTop: 12,
-    fontSize: 13,
-  },
-  generateButton: {
-    backgroundColor: '#22c55e',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  generateButtonDisabled: {
-    opacity: 0.7,
-  },
-  generateButtonText: {
-    color: '#022c22',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  recipeCard: {
-    marginTop: 16,
-    borderRadius: 16,
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  recipeContent: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  recipeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  recipeTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#e5e7eb',
-    flex: 1,
-    marginRight: 8,
-  },
-  recipeMeta: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e5e7eb',
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  bulletText: {
-    fontSize: 13,
-    color: '#d1d5db',
-    marginBottom: 2,
-  },
-  saveButton: {
-    marginTop: 16,
-    backgroundColor: '#0ea5e9',
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.7,
-  },
-  saveButtonText: {
-    color: '#e0f2fe',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  savedContainer: {
-    marginTop: 16,
-    flex: 1,
-  },
-  savedTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e5e7eb',
-    marginBottom: 4,
-  },
-  savedEmpty: {
-    fontSize: 13,
-    color: '#9ca3af',
-    marginTop: 4,
-  },
-  savedList: {
-    marginTop: 4,
-  },
-  savedListContent: {
-    paddingBottom: 16,
-  },
-  savedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    marginBottom: 8,
-  },
-  savedCardMain: {
-    flex: 1,
-    marginRight: 8,
-  },
-  savedCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e5e7eb',
-  },
-  savedCardMeta: {
-    fontSize: 11,
-    color: '#9ca3af',
-    marginTop: 2,
-  },
-  savedDeleteButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  savedDeleteText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#ef4444',
-  },
-});
-

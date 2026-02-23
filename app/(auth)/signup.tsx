@@ -1,165 +1,88 @@
 import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-
+import { Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 
 export default function SignupScreen() {
-  const router = useRouter();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields.');
+    if (!username || !email || !password) {
+      Alert.alert('Missing Fields', 'Please fill out all fields.');
       return;
     }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
-      router.replace('/(tabs)');
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to create account. Please try again.');
+      setLoading(true);
+      // 1. Create the user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // 2. Set their username
+      await updateProfile(userCredential.user, { displayName: username });
+      
+      // 3. Send the verification email
+      await sendEmailVerification(userCredential.user);
+
+      Alert.alert(
+        'Verify Your Email', 
+        'Account created! We have sent a verification link to your email. Please verify it before logging in.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+      );
+    } catch (error: any) {
+      Alert.alert('Signup Error', error?.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.card}>
-        <Text style={styles.title}>Create your UniBite account</Text>
-        <Text style={styles.subtitle}>Start tracking your fridge and meals.</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-slate-950 px-6 justify-center">
+      <Text className="text-4xl font-extrabold text-emerald-500 mb-2">Join UniBite.</Text>
+      <Text className="text-slate-400 mb-8">Create an account to save your recipes.</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm password"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
+      <TextInput
+        className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-4 text-slate-200 mb-4"
+        placeholder="Username"
+        placeholderTextColor="#64748b"
+        value={username}
+        onChangeText={setUsername}
+        autoCapitalize="none"
+      />
+      
+      <TextInput
+        className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-4 text-slate-200 mb-4"
+        placeholder="University Email"
+        placeholderTextColor="#64748b"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      <TextInput
+        className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-4 text-slate-200 mb-8"
+        placeholder="Password"
+        placeholderTextColor="#64748b"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
 
-        <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
-          <Text style={styles.buttonText}>{loading ? 'Creating account…' : 'Sign Up'}</Text>
-        </TouchableOpacity>
+      <Pressable 
+        className={`bg-emerald-500 rounded-xl py-4 items-center ${loading ? 'opacity-70' : 'active:opacity-80'}`}
+        onPress={handleSignup} 
+        disabled={loading}
+      >
+        <Text className="text-emerald-950 font-bold text-lg">{loading ? 'Creating...' : 'Create Account'}</Text>
+      </Pressable>
 
-        <View style={styles.footerRow}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <Link href="/(auth)/login" asChild>
-            <TouchableOpacity>
-              <Text style={styles.linkText}>Log in</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </View>
+      <Pressable className="mt-6 items-center" onPress={() => router.replace('/(auth)/login')}>
+        <Text className="text-slate-400">Already have an account? <Text className="text-emerald-500 font-bold">Log in</Text></Text>
+      </Pressable>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: '#0f172a',
-  },
-  card: {
-    backgroundColor: '#020617',
-    borderRadius: 16,
-    padding: 24,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#e5e7eb',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  input: {
-    backgroundColor: '#020617',
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#e5e7eb',
-    marginBottom: 12,
-  },
-  button: {
-    backgroundColor: '#22c55e',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: {
-    color: '#022c22',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  errorText: {
-    color: '#f97316',
-    fontSize: 13,
-    marginBottom: 8,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  footerText: {
-    color: '#9ca3af',
-    marginRight: 4,
-  },
-  linkText: {
-    color: '#22c55e',
-    fontWeight: '600',
-  },
-});
-
